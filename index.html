@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>上传图片代码</title>
+	<link rel="stylesheet" href="css/bootstrap.css">
+	<link rel="stylesheet" href="css/style.css">
+	<script src="jquery.min.js"></script>
+	<script src="exif.js"></script>
+	<script src="compressimg.js"></script>
+	<script>
+    $(document).ready(function(){
+      function upladeidcard() {
+        uploadImages(["file_upload_front_person", "file_upload_back_person", "file_upload_half_person"],
+          "/users/idcards-base64", ["front-half","positive-idcard", "back-idcard"]);
+      };
+      function uploadImages(singleFileIds, uploadUrl, params) {
+        var _self = this;
+        var formData = new FormData();
+        $.each(singleFileIds, function (idx, fileId) {
+          if (params == undefined) {
+            formData.append('file', document.getElementById(fileId).src);//document.getElementById(fileId).src
+          } else {
+            formData.append(params[idx], document.getElementById(fileId).src);//encodeURIComponent(fileId)
+          }
+        });
+        $.ajax({
+          type: "POST",
+          url: uploadUrl,
+          data: formData,
+          timeout: 60000,//60秒超时
+          processData: false,  // tell jQuery not to process the data
+          contentType: false,  // tell jQuery not to set contentType
+          success: function (data) {
+          },
+          complete: function (XMLHttpRequest, status) { //请求完成后最终执行参数
+            if (status == 'timeout') {//超时,status还有success,error等值的情况
+              ajaxTimeoutTest.abort();
+            }
+          }
+        });
+      };
+      function uploadimg(e) {
+        var imguploadID = (e.currentTarget.id).toString();//上传图片文件ID
+        if($("#"+imguploadID).val()=="")return;
+        $("#"+imguploadID).closest('div').find('img').remove();
+        var imageFiles,compre_img,quality=85,afterWidth=480,imgsize=1;
+        imageFiles = document.getElementById(imguploadID).files;//上传图片源文件
+        var pos = imageFiles[0].name.lastIndexOf(".");
+        var filetype = imageFiles[0].name.substring(pos,imageFiles[0].name.length);
+        if(filetype.toLowerCase()!=".jpg" && filetype.toLowerCase() != ".jpeg" && filetype.toLowerCase()!=".gif"&&filetype.toLowerCase()!=".png" && filetype.toLowerCase()!=".bmp"){
+          $(this.el).dialog("请选择图片文件上传");
+          return;
+        }
+        imgsize = imageFiles[0].size/1024/1024;
+        if(imgsize >= 1 && imgsize <= 2){
+          quality=50;
+        }else if(imgsize > 2 && imgsize <= 3){
+          quality=30;
+        }else if(imgsize > 3){
+          quality=10;
+        }else{
+          quality=85
+        }
+        var image = $('<img>').attr({
+          id:'file_'+imguploadID,
+          class:'img-thumbnail'}).css('display','none');
+        $("#"+imguploadID).closest('div').find('div').append($(image));
+        compre_img = document.getElementById('file_'+imguploadID);
+        compressImg(e,imageFiles,compre_img,quality,afterWidth);
+      };
+      $("#upload_front_person,#upload_back_person,#upload_half_person").on('change',function(e){
+        uploadimg(e);
+      });
+      $("#upladeidcard").on('click',upladeidcard());
+    });
+	</script>
+</head>
+<body>
+	<form class="form-horizontal" id="identicard_form2">
+            <div class="container">
+                <ul class="list-unstyled text-center clearfix padding20">
+                    <li class="screen320 col-xs-4 col-sm-4 col-md-4">
+                        <div>
+                            <span class="btn fileinput-button">
+                            <input id="upload_front_person" type="file" name="upload_front_person" accept="image/*" capture="camera">
+                                <div class="img_files" id="img_front"><img class="img-responsive" id="file_upload_front_person" src="images/upload_front_person.jpg" alt="身份证正面"></div>
+                                <i class="icon icon-plus" id="file_upload_front_person_p"></i>
+                            </span>
+                            <small class="color-gray">
+                                身份证正面
+                            </small>
+                        </div> 
+                    </li>
+                    <li class="screen320 col-xs-4 col-sm-4 col-md-4">
+                        <div>
+                            <span class="btn fileinput-button">
+                                <input id="upload_back_person" type="file" name="upload_back_person" accept="image/*" capture="camera">
+                                <div class="img_files" id="img_back"><img  class="img-responsive" id="file_upload_back_person" src="images/upload_back_person.jpg" alt="身份证背面"></div>
+                           
+                                <i class="icon icon-plus" id="file_upload_back_person_p"></i>
+                            </span>
+                            <small class="color-gray">
+                                身份证背面
+                            </small>
+                        </div>
+                    </li>
+                    <li class="screen320 col-xs-4 col-sm-4 col-md-4">
+                        <div>
+                            <span class="btn fileinput-button">
+                                <input id="upload_half_person" type="file" name="upload_half_person" accept="image/*" capture="camera">
+                                <div class="img_files" id="img_half"><img class="img-responsive" id="file_upload_half_person" src="images/upload_half_person.jpg" alt="手持身份证照"></div>
+                                <i class="icon icon-plus" id="file_upload_half_person_p"></i>
+                            </span>
+                            <small class="color-gray">
+                                手持身份证照
+                            </small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="container-nobg pad-b-15">
+                <h4><i class="camera pad15"></i>拍照指引</h4>
+                <ol class="marginl30">
+                    <li class="color-red">请按照提示信息拍摄照片，不要错误上传照片</li>
+                    <li class="color-red">良好的照片质量对您的审核有很大的帮助，请确保照片清晰可辨</li>
+                    <li>照片内容应真实，不得做任何修改</li>
+                </ol>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-centered">
+                <button type="button" class="btn btn-primary btn-block" id="idcardbtn" data-role="none">提交</button>
+            </div>
+        </form>
+</body>
+</html>
